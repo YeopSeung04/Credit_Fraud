@@ -1,0 +1,79 @@
+
+# ============================================================
+#  Credit Card Fraud Detection — 실험 설정
+#  모든 하이퍼파라미터는 여기서 관리 (코드에 하드코딩 금지)
+# ============================================================
+
+project:
+  name: "credit-fraud-mlpipeline"
+  version: "1.0.0"
+  seed: 42
+
+data:
+  raw_path: "data/creditcard.csv"          # Kaggle에서 받은 원본
+  processed_path: "data/processed/"
+  test_size: 0.2
+  val_size: 0.1                            # train에서 validation 분리
+  target_col: "Class"
+  drop_cols: ["Time"]                      # 모델에 사용하지 않을 컬럼
+
+preprocessing:
+  amount_transform: "log1p"               # Amount 로그 변환
+  scaling: "standard"                     # standard | robust | minmax
+  outlier_threshold: 5.0                  # IQR 기반 이상치 제거 기준
+
+imbalance:
+  strategy: "smote"                       # smote | adasyn | class_weight | none
+  smote_k_neighbors: 5
+  sampling_ratio: 0.1                     # 소수 클래스 비율 목표
+
+models:
+  logistic_regression:
+    C: 0.01
+    max_iter: 1000
+    class_weight: "balanced"
+    solver: "lbfgs"
+
+  random_forest:
+    n_estimators: 200
+    max_depth: 8
+    min_samples_leaf: 10
+    class_weight: "balanced"
+    n_jobs: -1
+
+  xgboost:
+    n_estimators: 300
+    max_depth: 6
+    learning_rate: 0.05
+    subsample: 0.8
+    colsample_bytree: 0.8
+    scale_pos_weight: 578                 # 정상:사기 비율 (자동 계산으로 override됨)
+    eval_metric: "aucpr"
+    tree_method: "hist"
+
+  lightgbm:
+    n_estimators: 300
+    num_leaves: 31
+    learning_rate: 0.05
+    min_child_samples: 20
+    class_weight: "balanced"
+    verbose: -1
+
+evaluation:
+  primary_metric: "average_precision"    # 불균형 데이터엔 AP가 AUC보다 중요
+  threshold_strategy: "f1"              # f1 | precision | recall | youden
+  metrics:
+    - "roc_auc"
+    - "average_precision"
+    - "f1"
+    - "precision"
+    - "recall"
+
+mlflow:
+  tracking_uri: "mlruns/"
+  experiment_name: "fraud-detection"
+
+output:
+  model_dir: "outputs/models/"
+  report_dir: "outputs/reports/"
+  figure_dir: "outputs/figures/"
