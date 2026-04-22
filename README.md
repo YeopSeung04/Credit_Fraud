@@ -32,7 +32,7 @@
 | Random Forest | 0.9743 | 0.7891 | 0.7734 | 0.8163 |
 | Logistic Reg | 0.9612 | 0.7234 | 0.6891 | 0.7551 |
 
-> 📌 불균형 데이터에서 ROC-AUC만 보면 안 됩니다.  
+> 불균형 데이터에서 ROC-AUC만 보면 안 됩니다.  
 > **Average Precision**을 주 지표로 선택한 이유를 `02_Modeling.ipynb`에서 설명합니다.
 
 ---
@@ -42,12 +42,12 @@
 ```
 credit-fraud-mlpipeline/
 │
-├── 📓 notebooks/
+├── notebooks/
 │   ├── 01_EDA.ipynb              # 탐색적 데이터 분석
 │   ├── 02_Modeling.ipynb         # 모델링 & 실험 관리
 │   └── 03_Interpretation.ipynb   # SHAP 기반 모델 해석
 │
-├── 🔧 src/
+├── src/
 │   ├── data_loader.py            # 데이터 로드 & 검증
 │   ├── preprocess.py             # sklearn Pipeline 전처리
 │   ├── train.py                  # MLflow 실험 추적 학습
@@ -56,15 +56,15 @@ credit-fraud-mlpipeline/
 │   ├── visualize.py              # 포트폴리오급 시각화
 │   └── utils.py                  # 공통 유틸리티
 │
-├── ⚙️  configs/
+├── configs/
 │   └── config.yaml               # 모든 하이퍼파라미터 중앙 관리
 │
-├── 📊 outputs/
+├── outputs/
 │   ├── models/                   # 학습된 모델 (.pkl)
 │   ├── figures/                  # 시각화 결과
 │   └── reports/                  # 평가 리포트 (.json)
 │
-├── 🧪 mlruns/                    # MLflow 실험 로그
+├── mlruns/                    # MLflow 실험 로그
 ├── data/README.md                # 데이터 다운로드 안내
 ├── requirements.txt
 └── README.md
