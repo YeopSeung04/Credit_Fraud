@@ -1,0 +1,201 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Credit Fraud README</title><style>
+
+@page { margin: 24mm 18mm; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
+  color: #172033;
+  line-height: 1.62;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 36px 42px;
+  background: #ffffff;
+}
+h1 { font-size: 30px; border-bottom: 3px solid #2f6fed; padding-bottom: 12px; margin: 0 0 18px; }
+h2 { font-size: 24px; margin-top: 34px; border-bottom: 1px solid #d9e1ef; padding-bottom: 8px; }
+h3 { font-size: 18px; margin-top: 26px; color: #263a63; }
+p { margin: 10px 0; }
+blockquote { margin: 16px 0; padding: 10px 16px; border-left: 4px solid #2f6fed; background: #f3f7ff; color: #263a63; }
+table { border-collapse: collapse; width: 100%; margin: 16px 0 22px; font-size: 14px; }
+th, td { border: 1px solid #d7deea; padding: 8px 10px; text-align: left; }
+th { background: #eef3fb; font-weight: 700; }
+tr:nth-child(even) td { background: #fafcff; }
+code { font-family: SFMono-Regular, Consolas, Menlo, monospace; background: #f1f4f8; padding: 2px 5px; border-radius: 4px; }
+pre { background: #111827; color: #eef2ff; padding: 16px; overflow-x: auto; border-radius: 8px; font-size: 13px; }
+pre code { background: transparent; color: inherit; padding: 0; }
+ul, ol { padding-left: 24px; }
+img { max-width: 100%; display: block; margin: 14px auto 24px; border: 1px solid #e1e7f0; border-radius: 6px; }
+hr { border: none; border-top: 1px solid #d9e1ef; margin: 26px 0; }
+.badges img { display: inline-block; border: none; margin: 0 4px 6px 0; }
+
+</style></head><body>
+<h1>Credit Card Fraud Detection — ML Pipeline</h1>
+<blockquote>
+<p><strong>금융 도메인 MLE 포트폴리오</strong> | 신용카드 사기 탐지 프로덕션급 ML 파이프라인</p>
+</blockquote>
+<p class="badges"><a href="https://img.shields.io/badge/Python-3.10-blue?logo=python">![Python</a>](https://python.org) <a href="https://img.shields.io/badge/scikit--learn-1.3-orange?logo=scikit-learn">![scikit-learn</a>](https://scikit-learn.org) <a href="https://img.shields.io/badge/MLflow-2.11-0194E2?logo=mlflow">![MLflow</a>](https://mlflow.org) <a href="https://img.shields.io/badge/XGBoost-2.0-red">![XGBoost</a>](https://xgboost.readthedocs.io) <a href="https://img.shields.io/badge/SHAP-0.43-blueviolet">![SHAP</a>](https://shap.readthedocs.io)</p>
+<hr>
+<h2>프로젝트 개요</h2>
+<p>유럽 카드사의 실거래 284,807건을 분석해 <strong>0.17%에 불과한 사기 거래를 탐지</strong>하는 ML 파이프라인입니다.</p>
+<p>단순 모델 학습을 넘어 <strong>프로덕션 환경을 의식한 설계</strong>에 집중했습니다.</p>
+<ul>
+<li>Config 기반 실험 관리 (하드코딩 없음)</li>
+<li>MLflow 실험 추적 (재현 가능한 실험)</li>
+<li>sklearn Pipeline으로 train/test leakage 방지</li>
+<li>SHAP 기반 모델 해석 (규제 대응 가능)</li>
+<li>비즈니스 임팩트 정량화</li>
+</ul>
+<hr>
+<h2>핵심 결과</h2>
+<h3>최종 테스트 성능</h3>
+<p>최종 선택 모델은 <strong>LightGBM</strong>입니다. 검증 세트에서 선택한 임계값 <code>0.8682</code>를 테스트 세트에 그대로 적용했습니다.</p>
+<table><thead><tr><th>모델</th><th>ROC-AUC</th><th>Average Precision</th><th>F1</th><th>Precision</th><th>Recall</th><th>TP</th><th>FP</th><th>FN</th><th>TN</th></tr></thead><tbody>
+<tr><td>LightGBM</td><td>0.9698</td><td>0.8102</td><td>0.8276</td><td>0.9114</td><td>0.7579</td><td>72</td><td>7</td><td>23</td><td>56,644</td></tr>
+</tbody></table>
+<ul>
+<li>테스트 세트 사기 거래 95건 중 <strong>72건 탐지</strong></li>
+<li>정상 거래 56,651건 중 <strong>7건만 오탐</strong></li>
+<li>오탐율(False Alarm Rate): <strong>0.0124%</strong></li>
+</ul>
+<h3>검증 세트 모델 비교</h3>
+<p>MLflow에 기록된 검증 세트 기준 비교입니다. 모델 선택에는 불균형 분류에 더 적합한 <strong>Average Precision</strong>을 주 지표로 사용했습니다.</p>
+<table><thead><tr><th>모델</th><th>ROC-AUC</th><th>Average Precision</th><th>F1</th><th>Precision</th><th>Recall</th><th>False Alarm Rate</th></tr></thead><tbody>
+<tr><td>LightGBM</td><td>0.9973</td><td>0.9139</td><td>0.9333</td><td>0.9767</td><td>0.8936</td><td>0.0035%</td></tr>
+<tr><td>XGBoost</td><td>0.9982</td><td>0.8946</td><td>0.9011</td><td>0.9318</td><td>0.8723</td><td>0.0106%</td></tr>
+<tr><td>Random Forest</td><td>0.9926</td><td>0.8604</td><td>0.8817</td><td>0.8913</td><td>0.8723</td><td>0.0177%</td></tr>
+<tr><td>Logistic Regression</td><td>0.9937</td><td>0.8610</td><td>0.8696</td><td>0.8889</td><td>0.8511</td><td>0.0177%</td></tr>
+</tbody></table>
+<blockquote>
+<p>불균형 데이터에서 ROC-AUC는 과대평가될 수 있습니다.</p>
+<p>이 프로젝트는 <strong>Average Precision</strong>, <strong>Recall</strong>, <strong>False Alarm Rate</strong>를 함께 보고 모델을 선택합니다.</p>
+</blockquote>
+<hr>
+<h2>데이터 분석 결과</h2>
+<h3>1. 데이터 개요</h3>
+<p>사용 데이터는 Kaggle Credit Card Fraud Detection 데이터셋입니다.</p>
+<table><thead><tr><th>항목</th><th>값</th></tr></thead><tbody>
+<tr><td>전체 거래 수</td><td>284,807</td></tr>
+<tr><td>정상 거래</td><td>284,315</td></tr>
+<tr><td>사기 거래</td><td>492</td></tr>
+<tr><td>사기 비율</td><td>0.1727%</td></tr>
+<tr><td>결측치</td><td>0</td></tr>
+<tr><td>중복 행</td><td>1,081</td></tr>
+</tbody></table>
+<img alt="Class Distribution" src="file:///Users/han-seung-yeop/Documents/GitHub/Credit-Fraud/outputs/figures/01_class_dist.png">
+<p>사기 거래는 전체의 <strong>0.17%</strong>뿐입니다. 따라서 단순 정확도는 의미가 거의 없습니다. 모든 거래를 정상으로 예측해도 정확도는 약 <strong>99.83%</strong>가 나오기 때문입니다.</p>
+<h3>2. 거래 금액 분석</h3>
+<table><thead><tr><th>지표</th><th>정상 거래</th><th>사기 거래</th></tr></thead><tbody>
+<tr><td>평균 금액</td><td>$88.29</td><td>$122.21</td></tr>
+<tr><td>중앙값</td><td>$22.00</td><td>$9.25</td></tr>
+</tbody></table>
+<img alt="Amount Distribution" src="file:///Users/han-seung-yeop/Documents/GitHub/Credit-Fraud/outputs/figures/02_amount_dist.png">
+<p>사기 거래는 평균 금액이 정상 거래보다 높지만, 중앙값은 더 낮습니다. 일부 고액 사기 거래가 평균을 끌어올리고 있으며, 금액 분포가 강하게 치우쳐 있어 <code>log1p</code> 변환을 적용했습니다.</p>
+<h3>3. 시간대별 패턴</h3>
+<img alt="Hourly Fraud Pattern" src="file:///Users/han-seung-yeop/Documents/GitHub/Credit-Fraud/outputs/figures/04_hourly_fraud.png">
+<p>시간대별 사기율은 일정하지 않았습니다. 가장 높은 사기율은 <strong>2시</strong>에 관찰됐고, 해당 시간대의 사기율은 <strong>1.7127%</strong>였습니다. 이를 바탕으로 <code>Hour</code>, <code>IsNight</code> 파생 피처를 생성했습니다.</p>
+<h3>4. 주요 판별 피처</h3>
+<img alt="Feature Distribution" src="file:///Users/han-seung-yeop/Documents/GitHub/Credit-Fraud/outputs/figures/03_feature_dist.png">
+<p>정상 거래와 사기 거래의 분포 차이가 큰 PCA 피처들이 확인됐습니다. 특히 <code>V3</code>, <code>V14</code>, <code>V17</code>, <code>V12</code>, <code>V10</code>, <code>V7</code> 등이 사기 탐지에 유용한 신호를 보였습니다.</p>
+<h3>5. 모델 해석 결과</h3>
+<img alt="SHAP Summary" src="file:///Users/han-seung-yeop/Documents/GitHub/Credit-Fraud/outputs/figures/10_shap_summary.png">
+<p>SHAP 분석 결과, <code>V14</code>, <code>V4</code>, <code>Amount_log</code>, <code>V1</code>, <code>V8</code> 등이 LightGBM 예측에 크게 기여했습니다. 원본 PCA 피처뿐 아니라 <code>Amount_log</code> 같은 엔지니어링 피처도 의미 있는 기여를 했습니다.</p>
+<img alt="Feature Groups" src="file:///Users/han-seung-yeop/Documents/GitHub/Credit-Fraud/outputs/figures/13_feature_groups.png">
+<hr>
+<h2>프로젝트 구조</h2>
+<pre><code>Credit-Fraud/
+│
+├── notebooks/
+│   ├── 01_EDA.ipynb              # 탐색적 데이터 분석
+│   ├── 02_Modeling.ipynb         # 모델링 &amp; 실험 관리
+│   └── 03_Interpretation.ipynb   # SHAP 기반 모델 해석
+│
+├── src/
+│   ├── data_loader.py            # 데이터 로드 &amp; 검증
+│   ├── preprocess.py             # sklearn Pipeline 전처리
+│   ├── train.py                  # MLflow 실험 추적 학습
+│   ├── evaluate.py               # 불균형 분류 평가 지표
+│   ├── explain.py                # SHAP 해석
+│   ├── visualize.py              # 포트폴리오급 시각화
+│   └── utils.py                  # 공통 유틸리티
+│
+├── configs/
+│   └── config.yaml               # 모든 하이퍼파라미터 중앙 관리
+│
+├── outputs/
+│   ├── models/                   # 학습된 모델 (.pkl)
+│   ├── figures/                  # 시각화 결과
+│   └── reports/                  # 평가 리포트 (.json)
+│
+├── mlruns/                       # MLflow 실험 로그
+├── data/README.md                # 데이터 다운로드 안내
+├── requirements.txt
+└── README.md</code></pre>
+<hr>
+<h2>설계 철학</h2>
+<h3>1. Config 기반 실험 관리</h3>
+<p>모든 하이퍼파라미터를 <code>configs/config.yaml</code> 한 곳에서 관리합니다.</p>
+<p>코드 수정 없이 파라미터만 바꿔서 실험 가능합니다.</p>
+<pre><code>imbalance:
+  strategy: &quot;smote&quot;    # smote | adasyn | class_weight | none
+  sampling_ratio: 0.1  # 이것만 바꿔서 다양한 실험 가능</code></pre>
+<h3>2. MLflow 실험 추적</h3>
+<pre><code>mlflow ui  # http://localhost:5000</code></pre>
+<p>모든 실험의 파라미터, 지표, 모델이 자동 기록됩니다.</p>
+<p>6개월 후에도 &quot;그 실험 어떻게 했더라?&quot; 가 해결됩니다.</p>
+<h3>3. 불균형 데이터 평가</h3>
+<pre><code>ROC-AUC  → 과대평가됨 (불균형 데이터에서 항상 높게 나옴)
+Average Precision → 실제 탐지 성능을 정확히 반영  ← 주 지표</code></pre>
+<h3>4. SHAP 기반 해석</h3>
+<pre><code># 왜 이 거래가 사기로 판단됐는가?
+shap_values = explainer.shap_values(transaction)
+# → V14가 +0.43으로 가장 크게 기여
+# → Amount_log가 +0.21로 두 번째 기여</code></pre>
+<p>금융 규제(금융소비자보호법) 상 AI 결정의 설명 의무에 대응합니다.</p>
+<hr>
+<h2>실행 방법</h2>
+<h3>환경 설정</h3>
+<pre><code>git clone https://github.com/YOUR_ID/Credit-Fraud
+cd Credit-Fraud
+
+conda create -n credit-fraud python=3.10 -y
+conda activate credit-fraud
+conda install -c conda-forge numba llvmlite -y
+pip install -r requirements.txt</code></pre>
+<h3>데이터 준비</h3>
+<pre><code># Kaggle에서 다운로드 후
+mv creditcard.csv data/
+
+# 또는 데모 데이터로 바로 실행 (자동 생성)</code></pre>
+<h3>노트북 실행</h3>
+<pre><code>jupyter lab
+# notebooks/ 폴더에서 순서대로 실행
+# 01_EDA → 02_Modeling → 03_Interpretation</code></pre>
+<h3>MLflow UI</h3>
+<pre><code>mlflow ui
+# http://localhost:5000 에서 실험 결과 확인</code></pre>
+<p>학습 로그는 프로젝트 루트의 <code>mlruns/</code>에 저장됩니다. 노트북에서 실행해도 동일한 위치를 사용하도록 <code>src/train.py</code>에서 경로를 프로젝트 루트 기준으로 고정했습니다.</p>
+<hr>
+<h2>기술 스택</h2>
+<table><thead><tr><th>분류</th><th>기술</th></tr></thead><tbody>
+<tr><td>언어</td><td>Python 3.10</td></tr>
+<tr><td>ML</td><td>scikit-learn, XGBoost, LightGBM</td></tr>
+<tr><td>불균형 처리</td><td>imbalanced-learn (SMOTE, ADASYN)</td></tr>
+<tr><td>실험 관리</td><td>MLflow</td></tr>
+<tr><td>모델 해석</td><td>SHAP</td></tr>
+<tr><td>시각화</td><td>Matplotlib</td></tr>
+<tr><td>설정 관리</td><td>PyYAML</td></tr>
+</tbody></table>
+<hr>
+<h2>학습한 것들</h2>
+<p>1. <strong>불균형 분류에서 올바른 평가 지표 선택</strong> — AUC만 보면 속는다</p>
+<p>2. <strong>SMOTE의 한계</strong> — 검증 세트에는 적용하면 안 된다 (leakage)</p>
+<p>3. <strong>임계값 최적화</strong> — 0.5가 항상 최적이 아니다</p>
+<p>4. <strong>MLflow로 실험 재현</strong> — &quot;저번에 잘 됐던 그 실험&quot; 을 다시 찾을 수 있다</p>
+<p>5. <strong>SHAP으로 모델 신뢰성 확보</strong> — 블랙박스 모델도 설명 가능하다</p>
+<hr>
+<h2>데이터 출처</h2>
+<ul>
+<li><strong>Kaggle</strong>: <a href="https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud">Credit Card Fraud Detection</a></li>
+<li><strong>원본 연구</strong>: Dal Pozzolo et al. (2015), Worldline &amp; ULB Machine Learning Group</li>
+<li><strong>라이선스</strong>: Database: Open Database License (ODbL)</li>
+</ul>
+</body></html>
