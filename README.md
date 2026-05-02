@@ -245,4 +245,4 @@ mlflow ui
 - **라이선스**: Database: Open Database License (ODbL)
 
 ## 모델 데시보드
-- **데시보드**: [Credit Card Fraud Detection](http://127.0.0.1:5000/#/compare-experiments/s?experiments=%5B%220%22%2C%22584662656977446303%22%5D&searchFilter=&orderByKey=attributes.start_time&orderByAsc=false&startTime=ALL&lifecycleFilter=Active&modelVersionFilter=All+Runs&datasetsFilter=W10%3D&compareRunsMode=CHART)
+- **데시보드**: [MLflow](http://127.0.0.1:5000/#/compare-experiments/s?experiments=%5B%220%22%2C%22584662656977446303%22%5D&searchFilter=&orderByKey=attributes.start_time&orderByAsc=false&startTime=ALL&lifecycleFilter=Active&modelVersionFilter=All+Runs&datasetsFilter=W10%3D&compareRunsMode=CHART)
