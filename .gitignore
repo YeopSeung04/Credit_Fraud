@@ -1,0 +1,14 @@
+# Local data
+data/*.csv
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# IDE files
+.idea/
+
+# Experiment and model artifacts
+mlruns/
+notebooks/mlruns/
+outputs/models/
