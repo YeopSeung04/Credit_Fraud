@@ -243,3 +243,6 @@ mlflow ui
 - **Kaggle**: [Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
 - **원본 연구**: Dal Pozzolo et al. (2015), Worldline & ULB Machine Learning Group
 - **라이선스**: Database: Open Database License (ODbL)
+
+## 모델 데시보드
+- **데시보드**: [Credit Card Fraud Detection] (http://127.0.0.1:5000/#/compare-experiments/s?experiments=%5B%220%22%2C%22584662656977446303%22%5D&searchFilter=&orderByKey=attributes.start_time&orderByAsc=false&startTime=ALL&lifecycleFilter=Active&modelVersionFilter=All+Runs&datasetsFilter=W10%3D&compareRunsMode=CHART)
