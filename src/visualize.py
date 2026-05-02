@@ -52,10 +52,10 @@ def _ax_style(ax, title="", xlabel="", ylabel=""):
 def plot_class_distribution(y, save_path=None):
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
     fig.patch.set_facecolor(BG)
-    fig.suptitle("클래스 불균형 분석", fontsize=13, color=TEXT_BRIGHT, y=1.02)
+    fig.suptitle("Class Imbalance Analysis", fontsize=13, color=TEXT_BRIGHT, y=1.02)
 
     counts = y.value_counts().sort_index()
-    labels = ["정상 (0)", "사기 (1)"]
+    labels = ["Normal (0)", "Fraud (1)"]
     colors = ["#3b82f6", "#f97316"]
 
     # 좌: 원형 차트
@@ -70,7 +70,7 @@ def plot_class_distribution(y, save_path=None):
     for at in autotexts:
         at.set_color(TEXT_BRIGHT)
         at.set_fontsize(10)
-    ax.set_title("클래스 비율", fontsize=11, color=TEXT_BRIGHT)
+    ax.set_title("Class Ratio", fontsize=11, color=TEXT_BRIGHT)
 
     # 우: 카운트 바 차트 (log scale)
     ax2 = axes[1]
@@ -80,7 +80,7 @@ def plot_class_distribution(y, save_path=None):
     for bar, cnt in zip(bars, counts.values):
         ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() * 1.1,
                  f"{cnt:,}", ha="center", va="bottom", fontsize=10, color=TEXT_BRIGHT)
-    _ax_style(ax2, title="거래 건수 (log scale)", ylabel="건수")
+    _ax_style(ax2, title="Transaction Count (log scale)", ylabel="Count")
 
     plt.tight_layout()
     if save_path:
@@ -91,21 +91,21 @@ def plot_class_distribution(y, save_path=None):
 def plot_amount_distribution(df, save_path=None):
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.5))
     fig.patch.set_facecolor(BG)
-    fig.suptitle("거래 금액 분포 (정상 vs 사기)", fontsize=13, color=TEXT_BRIGHT)
+    fig.suptitle("Transaction Amount Distribution (Normal vs Fraud)", fontsize=13, color=TEXT_BRIGHT)
 
     fraud  = df[df["Class"] == 1]["Amount"]
     normal = df[df["Class"] == 0]["Amount"]
 
     for ax, data, label, color, title in [
-        (axes[0], normal, "정상", "#3b82f6", "정상 거래 금액"),
-        (axes[1], fraud,  "사기", "#f97316", "사기 거래 금액"),
+        (axes[0], normal, "Normal", "#3b82f6", "Normal Transaction Amount"),
+        (axes[1], fraud,  "Fraud", "#f97316", "Fraud Transaction Amount"),
     ]:
         ax.hist(data, bins=60, color=color, alpha=0.8, edgecolor="none")
         ax.axvline(data.mean(), color="#fbbf24", linestyle="--", linewidth=1.5,
-                   label=f"평균: ${data.mean():.0f}")
+                   label=f"Mean: ${data.mean():.0f}")
         ax.axvline(data.median(), color="#a78bfa", linestyle=":", linewidth=1.5,
-                   label=f"중앙값: ${data.median():.0f}")
-        _ax_style(ax, title=title, xlabel="금액 ($)", ylabel="건수")
+                   label=f"Median: ${data.median():.0f}")
+        _ax_style(ax, title=title, xlabel="Amount ($)", ylabel="Count")
         ax.legend(fontsize=8, facecolor=SURFACE, edgecolor=BORDER)
 
     plt.tight_layout()
@@ -143,7 +143,7 @@ def plot_roc_pr_curves(results: dict, y_test, save_path=None):
                    label=f"{name} (AP={res['average_precision']:.4f})")
 
     _ax_style(ax_roc, title="ROC Curve", xlabel="FPR (False Positive Rate)", ylabel="TPR (True Positive Rate)")
-    _ax_style(ax_pr,  title="PR Curve ★ 주 평가 지표", xlabel="Recall", ylabel="Precision")
+    _ax_style(ax_pr,  title="PR Curve (Primary Metric)", xlabel="Recall", ylabel="Precision")
     ax_roc.set_xlim(-0.01, 1.01); ax_roc.set_ylim(-0.01, 1.05)
     ax_pr.set_xlim(-0.01, 1.01);  ax_pr.set_ylim(-0.01, 1.05)
 
@@ -161,7 +161,7 @@ def plot_model_comparison(compare_df: pd.DataFrame, save_path=None):
     metrics = ["ROC-AUC", "Avg Precision", "F1", "Precision", "Recall"]
     fig, axes = plt.subplots(1, len(metrics), figsize=(15, 4.5))
     fig.patch.set_facecolor(BG)
-    fig.suptitle("모델 성능 비교", fontsize=13, color=TEXT_BRIGHT)
+    fig.suptitle("Model Performance Comparison", fontsize=13, color=TEXT_BRIGHT)
 
     for ax, metric in zip(axes, metrics):
         colors = [PALETTE.get(m, "#94a3b8") for m in compare_df["Model"]]
@@ -199,8 +199,8 @@ def plot_confusion_matrix(y_true, y_pred, model_name="", save_path=None):
                     color="white" if cm[i,j] > thresh else TEXT)
 
     ax.set_xticks([0, 1]); ax.set_yticks([0, 1])
-    ax.set_xticklabels(["정상 예측", "사기 예측"], fontsize=9)
-    ax.set_yticklabels(["실제 정상", "실제 사기"], fontsize=9)
+    ax.set_xticklabels(["Predicted Normal", "Predicted Fraud"], fontsize=9)
+    ax.set_yticklabels(["Actual Normal", "Actual Fraud"], fontsize=9)
     ax.set_title(f"Confusion Matrix — {model_name}", fontsize=11, color=TEXT_BRIGHT, pad=12)
 
     for spine in ax.spines.values():
@@ -237,9 +237,9 @@ def plot_threshold_analysis(y_true, y_prob, save_path=None):
     ax.plot(thresholds, recalls,   color="#f97316", linewidth=2, label="Recall")
     ax.plot(thresholds, f1s,       color="#34d399", linewidth=2.5, label="F1")
     ax.axvline(best_t, color="#fbbf24", linestyle="--", linewidth=1.5,
-               label=f"최적 임계값: {best_t:.3f} (F1={f1s[best_idx]:.4f})")
+               label=f"Best Threshold: {best_t:.3f} (F1={f1s[best_idx]:.4f})")
 
-    _ax_style(ax, title="임계값 분석 — Precision / Recall / F1 트레이드오프",
+    _ax_style(ax, title="Threshold Analysis - Precision / Recall / F1 Trade-off",
               xlabel="Threshold", ylabel="Score")
     ax.legend(fontsize=9, facecolor=SURFACE, edgecolor=BORDER)
     ax.set_xlim(0, 1); ax.set_ylim(0, 1.05)

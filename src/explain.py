@@ -114,12 +114,12 @@ def plot_shap_summary(shap_values, X: pd.DataFrame, title: str = "", save_path: 
     ax.set_yticks(range(len(order)))
     ax.set_yticklabels(feat_labels, fontsize=10)
     ax.axvline(x=0, color="#8b949e", linewidth=0.8, linestyle="--")
-    ax.set_xlabel("SHAP Value (← 정상  |  사기 →)", fontsize=11)
+    ax.set_xlabel("SHAP Value (Normal <-  |  Fraud ->)", fontsize=11)
     ax.set_title(title or "SHAP Feature Importance", fontsize=13, pad=15, color="#e6edf3")
     ax.grid(axis="x", alpha=0.3)
 
-    pos_patch = mpatches.Patch(color=colors_pos, label="사기 방향 기여")
-    neg_patch = mpatches.Patch(color=colors_neg, label="정상 방향 기여")
+    pos_patch = mpatches.Patch(color=colors_pos, label="Fraud direction")
+    neg_patch = mpatches.Patch(color=colors_neg, label="Normal direction")
     ax.legend(handles=[pos_patch, neg_patch], loc="lower right", fontsize=9,
               facecolor="#161b22", edgecolor="#30363d")
 
@@ -162,7 +162,7 @@ def plot_shap_waterfall_single(shap_values, X: pd.DataFrame,
     ax.axvline(x=0, color="#8b949e", linewidth=0.8)
     ax.set_xlabel("SHAP Value", fontsize=11)
     ax.set_title(
-        title or f"개별 거래 설명 (Sample #{sample_idx})\n← 정상 기여  |  사기 기여 →",
+        title or f"Single Transaction Explanation (Sample #{sample_idx})\nNormal contribution <-  |  Fraud contribution ->",
         fontsize=12, pad=12, color="#e6edf3"
     )
     ax.grid(axis="x", alpha=0.3)

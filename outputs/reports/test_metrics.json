@@ -1,0 +1,15 @@
+{
+  "model": "LightGBM",
+  "roc_auc": 0.969836,
+  "average_precision": 0.810225,
+  "f1": 0.827586,
+  "precision": 0.911392,
+  "recall": 0.757895,
+  "threshold": 0.86823,
+  "tp": 72,
+  "fp": 7,
+  "tn": 56644,
+  "fn": 23,
+  "fraud_caught_rate": 0.7579,
+  "false_alarm_rate": 0.000124
+}

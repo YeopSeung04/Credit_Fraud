@@ -10,7 +10,14 @@ import mlflow.sklearn
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-from lightgbm import LGBMClassifier
+
+try:
+    from lightgbm import LGBMClassifier
+except (ImportError, OSError) as exc:
+    LGBMClassifier = None
+    LIGHTGBM_IMPORT_ERROR = exc
+else:
+    LIGHTGBM_IMPORT_ERROR = None
 
 from src.preprocess import build_pipeline
 from src.evaluate import evaluate, get_curve_data
@@ -33,7 +40,7 @@ def get_models(cfg: dict, scale_pos: float = None) -> dict:
     if scale_pos is not None:
         xgbc = {**xgbc, "scale_pos_weight": scale_pos}
 
-    return {
+    models = {
         "Logistic Regression": LogisticRegression(
             C=lrc["C"],
             max_iter=lrc["max_iter"],
@@ -61,7 +68,12 @@ def get_models(cfg: dict, scale_pos: float = None) -> dict:
             random_state=seed,
             verbosity=0,
         ),
-        "LightGBM": LGBMClassifier(
+    }
+
+    if LGBMClassifier is None:
+        logger.warning(f"LightGBM unavailable; skipping LightGBM. Reason: {LIGHTGBM_IMPORT_ERROR}")
+    else:
+        models["LightGBM"] = LGBMClassifier(
             n_estimators=lgbc["n_estimators"],
             num_leaves=lgbc["num_leaves"],
             learning_rate=lgbc["learning_rate"],
@@ -69,8 +81,9 @@ def get_models(cfg: dict, scale_pos: float = None) -> dict:
             class_weight=lgbc["class_weight"],
             verbose=lgbc["verbose"],
             random_state=seed,
-        ),
-    }
+        )
+
+    return models
 
 
 def train_one(

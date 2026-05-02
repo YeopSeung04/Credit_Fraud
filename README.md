@@ -2,10 +2,10 @@
 
 > **금융 도메인 MLE 포트폴리오** | 신용카드 사기 탐지 프로덕션급 ML 파이프라인
 
-[![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.10-blue?logo=python)](https://python.org)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3-orange?logo=scikit-learn)](https://scikit-learn.org)
-[![MLflow](https://img.shields.io/badge/MLflow-2.8-0194E2?logo=mlflow)](https://mlflow.org)
-[![XGBoost](https://img.shields.io/badge/XGBoost-1.7-red)](https://xgboost.readthedocs.io)
+[![MLflow](https://img.shields.io/badge/MLflow-2.11-0194E2?logo=mlflow)](https://mlflow.org)
+[![XGBoost](https://img.shields.io/badge/XGBoost-2.0-red)](https://xgboost.readthedocs.io)
 [![SHAP](https://img.shields.io/badge/SHAP-0.43-blueviolet)](https://shap.readthedocs.io)
 
 ---
@@ -25,22 +25,90 @@
 
 ## 핵심 결과
 
-| 모델 | ROC-AUC | Average Precision | F1 | Recall |
-|------|---------|-------------------|----|--------|
-| LightGBM | 0.9812 | 0.8234 | 0.8107 | 0.8367 |
-| XGBoost | 0.9798 | 0.8156 | 0.8043 | 0.8265 |
-| Random Forest | 0.9743 | 0.7891 | 0.7734 | 0.8163 |
-| Logistic Reg | 0.9612 | 0.7234 | 0.6891 | 0.7551 |
+### 최종 테스트 성능
 
-> 불균형 데이터에서 ROC-AUC만 보면 안 됩니다.  
-> **Average Precision**을 주 지표로 선택한 이유를 `02_Modeling.ipynb`에서 설명합니다.
+최종 선택 모델은 **LightGBM**입니다. 검증 세트에서 선택한 임계값 `0.8682`를 테스트 세트에 그대로 적용했습니다.
+
+| 모델 | ROC-AUC | Average Precision | F1 | Precision | Recall | TP | FP | FN | TN |
+|------|--------:|------------------:|---:|----------:|-------:|---:|---:|---:|---:|
+| LightGBM | 0.9698 | 0.8102 | 0.8276 | 0.9114 | 0.7579 | 72 | 7 | 23 | 56,644 |
+
+- 테스트 세트 사기 거래 95건 중 **72건 탐지**
+- 정상 거래 56,651건 중 **7건만 오탐**
+- 오탐율(False Alarm Rate): **0.0124%**
+
+### 검증 세트 모델 비교
+
+MLflow에 기록된 검증 세트 기준 비교입니다. 모델 선택에는 불균형 분류에 더 적합한 **Average Precision**을 주 지표로 사용했습니다.
+
+| 모델 | ROC-AUC | Average Precision | F1 | Precision | Recall | False Alarm Rate |
+|------|--------:|------------------:|---:|----------:|-------:|-----------------:|
+| LightGBM | 0.9973 | 0.9139 | 0.9333 | 0.9767 | 0.8936 | 0.0035% |
+| XGBoost | 0.9982 | 0.8946 | 0.9011 | 0.9318 | 0.8723 | 0.0106% |
+| Random Forest | 0.9926 | 0.8604 | 0.8817 | 0.8913 | 0.8723 | 0.0177% |
+| Logistic Regression | 0.9937 | 0.8610 | 0.8696 | 0.8889 | 0.8511 | 0.0177% |
+
+> 불균형 데이터에서 ROC-AUC는 과대평가될 수 있습니다.  
+> 이 프로젝트는 **Average Precision**, **Recall**, **False Alarm Rate**를 함께 보고 모델을 선택합니다.
+
+---
+
+## 데이터 분석 결과
+
+### 1. 데이터 개요
+
+사용 데이터는 Kaggle Credit Card Fraud Detection 데이터셋입니다.
+
+| 항목 | 값 |
+|------|---:|
+| 전체 거래 수 | 284,807 |
+| 정상 거래 | 284,315 |
+| 사기 거래 | 492 |
+| 사기 비율 | 0.1727% |
+| 결측치 | 0 |
+| 중복 행 | 1,081 |
+
+![Class Distribution](outputs/figures/01_class_dist.png)
+
+사기 거래는 전체의 **0.17%**뿐입니다. 따라서 단순 정확도는 의미가 거의 없습니다. 모든 거래를 정상으로 예측해도 정확도는 약 **99.83%**가 나오기 때문입니다.
+
+### 2. 거래 금액 분석
+
+| 지표 | 정상 거래 | 사기 거래 |
+|------|----------:|----------:|
+| 평균 금액 | $88.29 | $122.21 |
+| 중앙값 | $22.00 | $9.25 |
+
+![Amount Distribution](outputs/figures/02_amount_dist.png)
+
+사기 거래는 평균 금액이 정상 거래보다 높지만, 중앙값은 더 낮습니다. 일부 고액 사기 거래가 평균을 끌어올리고 있으며, 금액 분포가 강하게 치우쳐 있어 `log1p` 변환을 적용했습니다.
+
+### 3. 시간대별 패턴
+
+![Hourly Fraud Pattern](outputs/figures/04_hourly_fraud.png)
+
+시간대별 사기율은 일정하지 않았습니다. 가장 높은 사기율은 **2시**에 관찰됐고, 해당 시간대의 사기율은 **1.7127%**였습니다. 이를 바탕으로 `Hour`, `IsNight` 파생 피처를 생성했습니다.
+
+### 4. 주요 판별 피처
+
+![Feature Distribution](outputs/figures/03_feature_dist.png)
+
+정상 거래와 사기 거래의 분포 차이가 큰 PCA 피처들이 확인됐습니다. 특히 `V3`, `V14`, `V17`, `V12`, `V10`, `V7` 등이 사기 탐지에 유용한 신호를 보였습니다.
+
+### 5. 모델 해석 결과
+
+![SHAP Summary](outputs/figures/10_shap_summary.png)
+
+SHAP 분석 결과, `V14`, `V4`, `Amount_log`, `V1`, `V8` 등이 LightGBM 예측에 크게 기여했습니다. 원본 PCA 피처뿐 아니라 `Amount_log` 같은 엔지니어링 피처도 의미 있는 기여를 했습니다.
+
+![Feature Groups](outputs/figures/13_feature_groups.png)
 
 ---
 
 ## 프로젝트 구조
 
 ```
-credit-fraud-mlpipeline/
+Credit-Fraud/
 │
 ├── notebooks/
 │   ├── 01_EDA.ipynb              # 탐색적 데이터 분석
@@ -64,7 +132,7 @@ credit-fraud-mlpipeline/
 │   ├── figures/                  # 시각화 결과
 │   └── reports/                  # 평가 리포트 (.json)
 │
-├── mlruns/                    # MLflow 실험 로그
+├── mlruns/                       # MLflow 실험 로그
 ├── data/README.md                # 데이터 다운로드 안내
 ├── requirements.txt
 └── README.md
@@ -112,8 +180,12 @@ shap_values = explainer.shap_values(transaction)
 
 ### 환경 설정
 ```bash
-git clone https://github.com/YOUR_ID/credit-fraud-mlpipeline
-cd credit-fraud-mlpipeline
+git clone https://github.com/YOUR_ID/Credit-Fraud
+cd Credit-Fraud
+
+conda create -n credit-fraud python=3.10 -y
+conda activate credit-fraud
+conda install -c conda-forge numba llvmlite -y
 pip install -r requirements.txt
 ```
 
@@ -138,13 +210,15 @@ mlflow ui
 # http://localhost:5000 에서 실험 결과 확인
 ```
 
+학습 로그는 프로젝트 루트의 `mlruns/`에 저장됩니다. 노트북에서 실행해도 동일한 위치를 사용하도록 `src/train.py`에서 경로를 프로젝트 루트 기준으로 고정했습니다.
+
 ---
 
 ## 기술 스택
 
 | 분류 | 기술 |
 |------|------|
-| 언어 | Python 3.11 |
+| 언어 | Python 3.10 |
 | ML | scikit-learn, XGBoost, LightGBM |
 | 불균형 처리 | imbalanced-learn (SMOTE, ADASYN) |
 | 실험 관리 | MLflow |

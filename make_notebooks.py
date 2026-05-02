@@ -58,7 +58,11 @@ warnings.filterwarnings('ignore')
 
 from src.utils import load_config, set_seed, get_logger
 from src.data_loader import load_data, describe_data
-from src.visualize import plot_class_distribution, plot_amount_distribution
+import importlib
+import src.visualize as viz
+viz = importlib.reload(viz)  # reload edited visualization labels in an existing notebook kernel
+plot_class_distribution = viz.plot_class_distribution
+plot_amount_distribution = viz.plot_amount_distribution
 
 cfg = load_config('../configs/config.yaml')
 set_seed(cfg['project']['seed'])
@@ -86,13 +90,15 @@ print(f"\\n결측치: {sum(stats['null_counts'].values())}개")
 print(f"중복 행: {stats['duplicates']:,}개")"""),
 
 cell("""# ── 클래스 불균형 시각화 ────────────────────────────────────
-fig = plot_class_distribution(df['Class'], save_path='../outputs/figures/01_class_dist.png')
+viz = importlib.reload(viz)
+fig = viz.plot_class_distribution(df['Class'], save_path='../outputs/figures/01_class_dist.png')
 plt.show()
 print("\\n⚠️  이 불균형 수준에서 단순 정확도는 의미없음")
 print(f"   항상 '정상'으로 예측해도 정확도 = {1 - stats['fraud_rate']:.4%}")"""),
 
 cell("""# ── 거래 금액 분포 ──────────────────────────────────────────
-fig = plot_amount_distribution(df, save_path='../outputs/figures/02_amount_dist.png')
+viz = importlib.reload(viz)
+fig = viz.plot_amount_distribution(df, save_path='../outputs/figures/02_amount_dist.png')
 plt.show()"""),
 
 cell("""# ── V 피처 분포 비교 (정상 vs 사기) ───────────────────────
@@ -106,12 +112,12 @@ diff = (fraud[v_cols].mean() - normal[v_cols].mean()).abs().sort_values(ascendin
 
 fig, axes = plt.subplots(2, 5, figsize=(16, 7))
 fig.patch.set_facecolor('#0d1117')
-fig.suptitle('Top 10 Discriminative Features (정상 vs 사기)', fontsize=13, color='#e6edf3')
+fig.suptitle('Top 10 Discriminative Features (Normal vs Fraud)', fontsize=13, color='#e6edf3')
 
 for ax, col in zip(axes.flat, diff.head(10).index):
     ax.set_facecolor('#161b22')
-    ax.hist(normal[col], bins=50, alpha=0.6, color='#3b82f6', label='정상', density=True)
-    ax.hist(fraud[col],  bins=50, alpha=0.6, color='#f97316', label='사기', density=True)
+    ax.hist(normal[col], bins=50, alpha=0.6, color='#3b82f6', label='Normal', density=True)
+    ax.hist(fraud[col],  bins=50, alpha=0.6, color='#f97316', label='Fraud', density=True)
     ax.set_title(col, fontsize=9, color='#c9d1d9')
     ax.tick_params(labelsize=7, colors='#8b949e')
     for spine in ax.spines.values(): spine.set_edgecolor('#30363d')
@@ -128,7 +134,7 @@ cell("""# ── 시간대별 사기 패턴 ────────────
 df['Hour'] = (df['Time'] % 86400 // 3600).astype(int)
 
 hourly = df.groupby('Hour')['Class'].agg(['sum', 'count', 'mean']).reset_index()
-hourly.columns = ['Hour', '사기건수', '총거래', '사기율']
+hourly.columns = ['Hour', 'FraudCount', 'TotalTransactions', 'FraudRate']
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(13, 7))
 fig.patch.set_facecolor('#0d1117')
@@ -137,23 +143,23 @@ for ax in [ax1, ax2]:
     ax.set_facecolor('#161b22')
     for spine in ax.spines.values(): spine.set_edgecolor('#30363d')
 
-ax1.bar(hourly['Hour'], hourly['총거래'], color='#3b82f6', alpha=0.7, label='총 거래')
-ax1.set_title('시간대별 거래량', fontsize=11, color='#e6edf3')
-ax1.set_ylabel('거래 건수', color='#8b949e')
+ax1.bar(hourly['Hour'], hourly['TotalTransactions'], color='#3b82f6', alpha=0.7, label='Total transactions')
+ax1.set_title('Hourly Transaction Volume', fontsize=11, color='#e6edf3')
+ax1.set_ylabel('Transaction Count', color='#8b949e')
 ax1.tick_params(colors='#8b949e')
 
-ax2.bar(hourly['Hour'], hourly['사기율'] * 100, color='#f97316', alpha=0.8, label='사기율')
-ax2.set_title('시간대별 사기율 (%)', fontsize=11, color='#e6edf3')
-ax2.set_xlabel('시간 (Hour)', color='#8b949e')
-ax2.set_ylabel('사기율 (%)', color='#8b949e')
+ax2.bar(hourly['Hour'], hourly['FraudRate'] * 100, color='#f97316', alpha=0.8, label='Fraud rate')
+ax2.set_title('Hourly Fraud Rate (%)', fontsize=11, color='#e6edf3')
+ax2.set_xlabel('Hour', color='#8b949e')
+ax2.set_ylabel('Fraud Rate (%)', color='#8b949e')
 ax2.tick_params(colors='#8b949e')
 
 plt.tight_layout()
 plt.savefig('../outputs/figures/04_hourly_fraud.png', dpi=150, bbox_inches='tight', facecolor='#0d1117')
 plt.show()
 
-peak_hour = hourly.loc[hourly['사기율'].idxmax(), 'Hour']
-print(f"\\n사기율 최고 시간대: {peak_hour}시 ({hourly.loc[hourly['사기율'].idxmax(), '사기율']:.4%})")"""),
+peak_hour = hourly.loc[hourly['FraudRate'].idxmax(), 'Hour']
+print(f"\\n사기율 최고 시간대: {peak_hour}시 ({hourly.loc[hourly['FraudRate'].idxmax(), 'FraudRate']:.4%})")"""),
 
 cell("""# ── 상관관계 히트맵 (Top 피처) ──────────────────────────────
 top_feats = diff.head(10).index.tolist() + ['Amount', 'Class']
@@ -177,7 +183,7 @@ for i in range(len(top_feats)):
                 fontsize=7, color='white' if abs(val) > 0.5 else '#c9d1d9')
 
 plt.colorbar(im, ax=ax, fraction=0.046)
-ax.set_title('피처 상관관계 (Class 포함)', fontsize=12, color='#e6edf3', pad=15)
+ax.set_title('Feature Correlation (Including Class)', fontsize=12, color='#e6edf3', pad=15)
 for spine in ax.spines.values(): spine.set_edgecolor('#30363d')
 
 plt.tight_layout()
@@ -399,7 +405,13 @@ from src.utils import load_config, set_seed
 from src.data_loader import load_data
 from src.preprocess import preprocess, split_data
 from src.train import load_model
-from src.explain import compute_shap, plot_shap_summary, plot_shap_waterfall_single, get_feature_importance_df
+import importlib
+import src.explain as explain
+explain = importlib.reload(explain)  # reload edited plot labels in an existing notebook kernel
+compute_shap = explain.compute_shap
+plot_shap_summary = explain.plot_shap_summary
+plot_shap_waterfall_single = explain.plot_shap_waterfall_single
+get_feature_importance_df = explain.get_feature_importance_df
 from src.evaluate import evaluate
 
 cfg = load_config('../configs/config.yaml')
@@ -430,15 +442,16 @@ shap_values, X_sample = compute_shap(pipeline, X_test, best_model_name, n_sample
 print(f"SHAP 계산 완료: {shap_values.shape}")"""),
 
 cell("""# ── SHAP Summary Plot ────────────────────────────────────────
-fig = plot_shap_summary(
+explain = importlib.reload(explain)
+fig = explain.plot_shap_summary(
     shap_values, X_sample,
-    title=f"SHAP Feature Importance — {best_model_name}",
+    title=f"SHAP Feature Importance - {best_model_name}",
     save_path='../outputs/figures/10_shap_summary.png'
 )
 plt.show()
 
 # 상위 피처 출력
-feat_imp = get_feature_importance_df(shap_values, X_sample.columns.tolist() if hasattr(X_sample, 'columns') else feature_cols)
+feat_imp = explain.get_feature_importance_df(shap_values, X_sample.columns.tolist() if hasattr(X_sample, 'columns') else feature_cols)
 print("\\n상위 10개 중요 피처 (SHAP 기준):")
 print(feat_imp.head(10).to_string(index=False))"""),
 
@@ -460,16 +473,18 @@ if len(tp_indices) > 0:
     print(f"  사기 확률: {fraud_prob:.4f} (임계값: {threshold:.4f})")
     print(f"  판정: {'사기 ✅' if y_pred_sample[idx] == 1 else '정상'}")
 
-    fig = plot_shap_waterfall_single(
+    explain = importlib.reload(explain)
+    fig = explain.plot_shap_waterfall_single(
         shap_values, X_sample,
         sample_idx=idx,
-        title=f"사기 거래 설명 — 왜 사기로 판단했는가? (확률: {fraud_prob:.3f})",
+        title=f"Fraud Transaction Explanation - Why was it flagged? (probability: {fraud_prob:.3f})",
         save_path='../outputs/figures/11_shap_waterfall_fraud.png'
     )
     plt.show()
 else:
     print("\\n샘플 범위에 TP 없음 — 첫 번째 샘플로 대체")
-    fig = plot_shap_waterfall_single(shap_values, X_sample, 0,
+    explain = importlib.reload(explain)
+    fig = explain.plot_shap_waterfall_single(shap_values, X_sample, 0,
                                       save_path='../outputs/figures/11_shap_waterfall.png')
     plt.show()"""),
 
@@ -481,15 +496,16 @@ if len(tn_indices) > 0:
     normal_prob = y_prob_sample[idx]
     print(f"정상 거래 #{idx}:")
     print(f"  사기 확률: {normal_prob:.4f}")
-    fig = plot_shap_waterfall_single(
+    explain = importlib.reload(explain)
+    fig = explain.plot_shap_waterfall_single(
         shap_values, X_sample, sample_idx=idx,
-        title=f"정상 거래 설명 — 왜 정상으로 판단했는가? (확률: {normal_prob:.3f})",
+        title=f"Normal Transaction Explanation - Why was it cleared? (probability: {normal_prob:.3f})",
         save_path='../outputs/figures/12_shap_waterfall_normal.png'
     )
     plt.show()"""),
 
 cell("""# ── 피처 그룹별 기여도 분석 ────────────────────────────────
-feat_imp = get_feature_importance_df(shap_values, 
+feat_imp = explain.get_feature_importance_df(shap_values, 
     X_sample.columns.tolist() if hasattr(X_sample, 'columns') else feature_cols)
 
 # V 피처 vs 엔지니어링 피처 비교
@@ -503,13 +519,13 @@ fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 fig.patch.set_facecolor('#0d1117')
 
 for ax, data, title, color in [
-    (axes[0], v_feats.head(10), 'Top V 피처 (PCA 원본)', '#3b82f6'),
-    (axes[1], eng_feats, '엔지니어링 피처', '#34d399'),
+    (axes[0], v_feats.head(10), 'Top V Features (PCA)', '#3b82f6'),
+    (axes[1], eng_feats, 'Engineered Features', '#34d399'),
 ]:
     ax.set_facecolor('#161b22')
     ax.barh(data['feature'], data['shap_mean_abs'], color=color, alpha=0.8)
     ax.set_title(title, fontsize=11, color='#e6edf3')
-    ax.set_xlabel('평균 |SHAP|', fontsize=9, color='#8b949e')
+    ax.set_xlabel('Mean |SHAP|', fontsize=9, color='#8b949e')
     ax.tick_params(colors='#8b949e', labelsize=8)
     for spine in ax.spines.values(): spine.set_edgecolor('#30363d')
     ax.invert_yaxis()

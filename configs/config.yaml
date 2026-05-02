@@ -5,13 +5,13 @@
 # ============================================================
 
 project:
-  name: "credit-fraud-mlpipeline"
+  name: "Credit-Fraud"
   version: "1.0.0"
   seed: 42
 
 data:
-  raw_path: "data/creditcard.csv"          # Kaggle에서 받은 원본
-  processed_path: "data/processed/"
+  raw_path: "../data/creditcard.csv"          # Kaggle에서 받은 원본
+  processed_path: "../data/processed/"
   test_size: 0.2
   val_size: 0.1                            # train에서 validation 분리
   target_col: "Class"
@@ -74,6 +74,6 @@ mlflow:
   experiment_name: "fraud-detection"
 
 output:
-  model_dir: "outputs/models/"
-  report_dir: "outputs/reports/"
-  figure_dir: "outputs/figures/"
+  model_dir: "../outputs/models/"
+  report_dir: "../outputs/reports/"
+  figure_dir: "../outputs/figures/"
